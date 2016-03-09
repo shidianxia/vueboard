@@ -1,10 +1,16 @@
+// 初始化 leacloud SDK 参数
+AV.initialize('67n17rzfrsej9y6hd9h04qmwgiof86k8omxo4ungpnbbdc91', 'm3j0v7zt05m3cfalgkckjf65cobr9w60rgmzafe8ppv2dww8');
+
+var Events = AV.Object.extend('Events');
+var events = new Events();
+var eventsQuery = new AV.Query('Events');
 // app 主文件
 var vm = new Vue({
-	// 绑定 ID 为 events 的元素
+	// 绑定 pid 为 events 的元素
 	el: '#events',
 	// app 需要的数据
 	data: {
-		event: { name: '', description: '', date: '' },
+		event: { name: '', content: '', date: '' },
 		events: []
 	},
 	// app 载入时执行
@@ -15,40 +21,35 @@ var vm = new Vue({
 	methods: {
         // 定义一个存取数据的方法
 		fetchEvents: function () {
-            var events = [
-                {
-                    id: 1,
-                    name: '过去十年京沪房价上涨近400%',
-                    description: '过去十年，股市回报不及楼市，北京、上海房价上涨380%。',
-                    date: '2016-03-08'
-                },
-                {
-                    id: 2,
-                    name: '人民币中间价再回6.50水平',
-                    description: '今日人民币兑美元中间价报6.5041，较上个发布日（3月7日）6.5113，调升72个基点，连涨4日，为1月4日以来最强水平。',
-                    date: '2016-03-08'
-                },
-                {
-                    id: 3,
-                    name: '中国2月出口创近7年最大降幅',
-                    description: '中国2月出口大跌远超预期，按美元计同比创2009年5月以来近七年最大降幅。',
-                    date: '2016-03-08'
-                }
-            ];
-            // 更新数据
-            this.$set('events', events);
+            var data = [];
+            eventsQuery.find().then(function (results) {                
+                for (var i = 0; i < results.length; i++) {
+                    data.push(results[i].attributes)                   
+                }              
+                console.log('data:' + JSON.stringify(data));
+            });
+            this.$set('events', data);
         },
         
         // 提交条目的方法
         addEvent: function () {
             if (this.event.name) {
+                events.save(this.event).then(function () {
+                    console.log('event sent success')
+                });
                 this.events.push(this.event);
-                this.event = { name: '', description: '', date: '' };
+                console.log('event data saved:' + JSON.stringify(this.event));
+                this.event = { name: '', content: '', date: '' };
             }
         },
         
         // 删除条目的方法
         deleteEvent: function (index) {
+            console.log(this.events[index]);
+            eventsQuery.equalTo('pid', this.events[index].pid)
+            eventsQuery.destroyAll().then(function () {
+                console.log('event delete success')
+            });
             this.events.$remove(this.events[index]);
         }
 	}
